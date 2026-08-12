@@ -1,5 +1,3 @@
-Certo — ho sistemato la formattazione per GitHub, in particolare **tabelle, liste, code block, titoli, diagrammi Mermaid/ASCII e link**, mantenendo il contenuto tecnico e i placeholder per le informazioni sensibili.
-
 # Home Lab Infrastructure Report
 
 > **Documentation Notice:** All IP addresses and network addresses shown in this document are fictional and are used exclusively for documentation purposes. They do not represent the actual network configuration.
