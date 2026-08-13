@@ -27,7 +27,7 @@ The infrastructure is built around:
 * A pfSense firewall appliance
 * A network switch
 * A Proxmox virtualization server
-* An FSRV NAS
+* A NAS
 * A TP-Link wireless access point configured in AP mode
 * A Debian container running Pi-hole
 * A desktop workstation
