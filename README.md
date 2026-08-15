@@ -69,26 +69,18 @@ The current physical and logical architecture is:
                               pfSense
                                   |
                                Switch
-                 +----------------+----------------+
-                 |                |                |
-                 |                |                |
-              Proxmox          FSRV NAS       Desktop
-              Server                            Workstation
-                 |
-          Debian Container
-                 |
-              Pi-hole
+                 +----------------+----------------+----------------+
+                 |                |                |                |
+                 |                |                |                |
+              Proxmox          FSRV NAS       Desktop         TP-Link Access Point
+              Server                            Workstation         |
+                 |                                                  |  
+          Debian Container                                        Wi-Fi
+                 |                                                  |
+              Pi-hole                                        +------+------+
+                                                             |             |
+                                                           Laptop 1      Laptop 2                            
 
-                               Switch
-                                  |
-                         TP-Link Access Point
-                              (AP Mode)
-                                  |
-                                Wi-Fi
-                                  |
-                           +------+------+
-                           |             |
-                        Laptop 1      Laptop 2
 ```
 
 Pi-hole is a network service running inside the Debian container on Proxmox.
