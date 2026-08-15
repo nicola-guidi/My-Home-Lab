@@ -72,10 +72,10 @@ The current physical and logical architecture is:
                  +----------------+----------------+----------------+
                  |                |                |                |
                  |                |                |                |
-              Proxmox          FSRV NAS       Desktop         TP-Link Access Point
-              Server                            Workstation         |
+              Proxmox            NAS             Desktop          TP-Link 
+               Server                          Workstation     Access Point
                  |                                                  |  
-          Debian Container                                        Wi-Fi
+           Debian Container                                       Wi-Fi
                  |                                                  |
               Pi-hole                                        +------+------+
                                                              |             |
