@@ -28,7 +28,7 @@ The infrastructure is built around:
 * A network switch
 * A Proxmox virtualization server
 * A NAS
-* A TP-Link wireless access point configured in AP mode
+* A TP-Link wireless router configured in AP mode
 * A Debian container running Pi-hole
 * A desktop workstation
 * Laptop clients
