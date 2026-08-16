@@ -6,7 +6,7 @@
 
 This home lab provides a segmented environment for networking, cybersecurity, virtualization, Linux administration, DNS, VPNs, and network storage.
 
-The infrastructure is built around:
+The main components are:
 
 - **pfSense** — firewall, router, and WireGuard VPN gateway
 - **Snort** — intrusion detection and traffic monitoring
@@ -41,45 +41,37 @@ pfSense LAN:   10.99.50.1/24
 
 pfSense acts as the default gateway for the lab network and routes traffic between the LAN and the upstream network.
 
-### Physical Topology
+### Topology
 
 ```text
-                         Internet
-                            |
-                       Home Router
-                            |
-                         pfSense
-                            |
-                         Switch
-            +---------------+---------------+
-            |               |               |
-         Proxmox         FSRV NAS         Desktop
-            |
-      Debian Container
-            |
-         Pi-hole
-
-                         Switch
-                            |
-                    TP-Link AP (AP Mode)
-                            |
-                          Wi-Fi
-                       +----+----+
-                       |         |
-                    Laptop 1  Laptop 2
+                              Internet
+                                  |
+                             Home Router
+                                  |
+                               pfSense
+                                  |
+                               Switch
+                 +----------------+----------------+----------------+
+                 |                |                |                |
+              Proxmox          FSRV NAS          Desktop         TP-Link AP
+                 |                              Workstation        |
+          Debian Container                                         Wi-Fi
+                 |                                            +----+----+
+              Pi-hole                                          |         |
+                                                            Laptop 1  Laptop 2
 ```
 
 The desktop is connected directly to the switch using Ethernet.
 
-The laptops connect through the TP-Link Access Point configured in AP mode.
+The TP-Link device operates in **Access Point mode**, providing wireless connectivity while routing and firewall functions remain on pfSense.
 
 ---
 
-# pfSense
+## pfSense
 
 pfSense provides the primary firewall, routing, and VPN functionality.
 
-## Interface Configuration
+### Interface Configuration
 
 | Interface | Network | Address | Purpose |
 |---|---|---|---|
@@ -102,13 +94,11 @@ IP Address:       10.99.50.1/24
 Default Gateway:  None
 ```
 
-The LAN interface does not require a separate default gateway because pfSense performs the routing between the LAN and WAN interfaces.
+The LAN interface does not require a separate gateway because pfSense performs the routing between the LAN and WAN interfaces.
 
----
+### Firewall Rules
 
-## Firewall Rules
-
-The lab network is allowed to initiate outbound connections:
+Outbound traffic from the lab network is allowed:
 
 ```text
 Source:       10.99.50.0/24
@@ -117,7 +107,7 @@ Protocol:     Any
 Action:       Allow
 ```
 
-Inbound traffic from the WAN to the LAN is explicitly denied:
+Unsolicited inbound traffic from WAN to LAN is explicitly denied:
 
 ```text
 Source:       WAN / Any
@@ -126,35 +116,17 @@ Protocol:     Any
 Action:       Deny
 ```
 
-This prevents unsolicited inbound connections from the upstream network from directly accessing hosts on the lab LAN.
+This prevents hosts on the upstream network from directly initiating connections to the lab network.
 
-The firewall is stateful, so return traffic for connections initiated from the LAN is allowed according to the firewall state.
-
-### Traffic Policy
-
-```text
-                    WAN
-                     |
-                     v
-                 +--------+
-                 | pfSense|
-                 +--------+
-                     |
-          +----------+----------+
-          |                     |
-       Outbound              Inbound
-       LAN -> WAN             WAN -> LAN
-          |                     |
-        ALLOW                  DENY
-```
+Because pfSense is stateful, return traffic for connections initiated from the LAN is allowed according to the firewall state.
 
 ---
 
-# Snort IDS
+## Snort IDS
 
-[Snort](https://www.snort.org/) is installed on pfSense and provides additional traffic monitoring and intrusion detection.
+[Snort](https://www.snort.org/) is installed on pfSense and provides intrusion detection and network traffic monitoring.
 
-Snort can generate alerts for traffic matching configured detection rules, including:
+It can generate alerts for traffic matching configured detection rules, including:
 
 - Port scanning
 - Network reconnaissance
@@ -162,21 +134,11 @@ Snort can generate alerts for traffic matching configured detection rules, inclu
 - Known malicious traffic patterns
 - Other suspicious activity
 
-Snort complements the firewall but does not replace firewall rules.
-
-```text
-Network Traffic
-      |
-   pfSense
-      |
-    Snort
-      |
-   Alerts
-```
+Snort provides additional visibility and complements the pfSense firewall.
 
 ---
 
-# WireGuard VPN
+## WireGuard VPN
 
 WireGuard is configured on pfSense and provides VPN connectivity.
 
@@ -204,11 +166,11 @@ Endpoint = <REDACTED>
 AllowedIPs = 0.0.0.0/0
 ```
 
-## WireGuard Installation Issue
+### WireGuard Installation Issue
 
 During the initial configuration, the WireGuard package was unavailable through the pfSense package manager because of a repository issue.
 
-The repository information was checked using:
+The repository was checked using:
 
 ```bash
 pkg-static info pfSense-repo
@@ -224,21 +186,13 @@ After resolving the repository issue, the WireGuard package became available and
 
 ---
 
-# Proxmox
+## Proxmox
 
 Proxmox is used as the virtualization platform for infrastructure services.
 
-The current environment contains a Debian container dedicated to Pi-hole.
+A dedicated Debian container hosts Pi-hole.
 
-```text
-Proxmox
-   |
-Debian Container
-   |
-Pi-hole
-```
-
-## Proxmox Repository Issue
+### Proxmox Repository Issue
 
 The Proxmox server initially attempted to use the Enterprise repositories without an active subscription.
 
@@ -256,7 +210,7 @@ resulted in errors similar to:
 
 The Enterprise repositories were disabled and the no-subscription repository was configured for the home lab.
 
-Example configuration:
+Example:
 
 ```text
 http://download.proxmox.com/debian/pve
@@ -274,7 +228,7 @@ completed successfully.
 
 ---
 
-# Pi-hole
+## Pi-hole
 
 Pi-hole runs inside a dedicated Debian container on Proxmox.
 
@@ -286,39 +240,15 @@ It provides:
 - Tracker blocking
 - DNS-based filtering
 
-## DNS Architecture
-
-```text
-Client
-   |
-   | DNS Query
-   v
-Pi-hole
-   |
-   +---- Local DNS
-   |
-   +---- Upstream DNS
-```
-
 Clients configured to use Pi-hole send their DNS queries to the service over the lab network.
-
-Pi-hole provides centralized DNS filtering without requiring a separate DNS service on each client.
 
 ---
 
-# FSRV NAS
+## FSRV NAS
 
 **FSRV** provides centralized network storage for the home lab.
 
 The NAS is connected to the main network switch and provides storage independently from the compute resources hosted by Proxmox.
-
-```text
-                 Network Switch
-                       |
-                    FSRV NAS
-                       |
-                Network Storage
-```
 
 FSRV is used for:
 
@@ -329,19 +259,9 @@ FSRV is used for:
 
 ---
 
-# Samba / SMB
+## Samba / SMB
 
 Samba is configured on FSRV to provide authenticated SMB network file sharing.
-
-```text
-Client
-   |
-   | SMB
-   v
-FSRV NAS
-   |
-Samba / SMB Share
-```
 
 Example sanitized configuration:
 
@@ -370,29 +290,19 @@ Credentials are not included in public documentation.
 
 ---
 
-# Network Connectivity
+## Network Connectivity
 
 The network switch provides wired connectivity for the main infrastructure components.
 
-```text
-Switch
-├── pfSense
-├── Proxmox
-├── FSRV NAS
-├── Desktop
-└── TP-Link Access Point
-      └── Wi-Fi Clients
-```
-
-The TP-Link device operates in **Access Point mode**.
+The TP-Link device operates in **Access Point mode** and provides wireless connectivity for the laptop clients.
 
 Routing and firewall functions remain on pfSense.
 
 ---
 
-# Security Architecture
+## Security Architecture
 
-The infrastructure uses multiple security layers.
+The infrastructure uses multiple security layers:
 
 | Component | Function |
 |---|---|
@@ -405,33 +315,11 @@ The infrastructure uses multiple security layers.
 | Proxmox | Virtualization and service isolation |
 | Samba Authentication | Controlled file access |
 
-### Security Flow
-
-```text
-                         Internet
-                            |
-                       Home Router
-                            |
-                         pfSense
-                            |
-                     Firewall Rules
-                            |
-                  +---------+---------+
-                  |                   |
-                Snort                 LAN
-                                      |
-                    +-----------------+----------------+
-                    |                 |                |
-                 Proxmox            FSRV            Clients
-                    |                                  |
-              Debian Container                     Desktop
-                    |                                  |
-                 Pi-hole                           Laptops
-```
+The main security boundary is the pfSense firewall, which separates the upstream network from the lab network.
 
 ---
 
-# Current Infrastructure Status
+## Current Infrastructure Status
 
 | Component | Status |
 |---|---|
@@ -454,7 +342,7 @@ The infrastructure uses multiple security layers.
 
 ---
 
-# Sensitive Information
+## Sensitive Information
 
 The following information is intentionally excluded from this documentation:
 
@@ -485,7 +373,7 @@ Documentation uses fictional values such as:
 
 ---
 
-# Skills Demonstrated
+## Skills Demonstrated
 
 This home lab provides hands-on experience with:
 
@@ -507,7 +395,7 @@ This home lab provides hands-on experience with:
 
 ---
 
-# Summary
+## Summary
 
 The home lab is a segmented infrastructure environment built around pfSense.
 
@@ -515,12 +403,10 @@ The home lab is a segmented infrastructure environment built around pfSense.
 
 **Snort** provides additional intrusion detection and network traffic monitoring.
 
-**Proxmox** provides the virtualization layer and hosts a dedicated Debian container running **Pi-hole**.
-
-**Pi-hole** provides local DNS resolution and DNS-based advertisement and tracker blocking.
+**Proxmox** provides the virtualization layer and hosts a dedicated Debian container running **Pi-hole** for local DNS and DNS-based filtering.
 
 **FSRV** provides centralized network storage through **Samba/SMB**.
 
 The network switch provides wired connectivity, while the **TP-Link Access Point** provides wireless connectivity for laptop clients.
 
-The resulting environment provides a practical platform for learning and demonstrating networking, cybersecurity, virtualization, Linux administration, DNS, VPNs, storage, and infrastructure management.
+The environment provides hands-on experience with networking, cybersecurity, virtualization, Linux administration, DNS, VPNs, storage, and infrastructure management.
