@@ -49,7 +49,7 @@ The laptops connect wirelessly through the TP-Link Access Point.
 | Proxmox Server | Virtualization platform | Operational |
 | Debian Container | Container for Pi-hole | Operational |
 | Pi-hole | Local DNS server and ad blocker | Operational |
-| FSRV | NAS and network file server | Operational |
+| NAS | Network file server | Operational |
 | Samba / SMB | Network file sharing | Operational |
 | TP-Link Access Point | Wireless connectivity | Operational |
 | Desktop Workstation | Administration / client | Operational |
